@@ -1,7 +1,12 @@
 // Package spritz implements the Spritz stream-cipher
 /*
 
+
 http://people.csail.mit.edu/rivest/pubs/RS14.pdf
+
+This is an unoptimized implementation using the algorithms straight from the
+PDF.  This cipher is new and has not been sufficiently analysed.  You probably
+shouldn't use this for anything.
 
 */
 package spritz
