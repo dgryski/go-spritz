@@ -156,6 +156,57 @@ func Decrypt(k, m []byte) []byte {
 	return ptxt
 }
 
+func EncryptWithIV(k, iv, m []byte) []byte {
+
+	var c cipher
+
+	c.keySetup(k)
+
+	c.absorbStop()
+	c.absorb(iv)
+
+	ctxt := make([]byte, len(m))
+
+	for i, x := range c.squeeze(len(ctxt)) {
+		ctxt[i] = m[i] + x
+	}
+
+	return ctxt
+}
+
+func DecryptWithIV(k, iv, m []byte) []byte {
+
+	var c cipher
+
+	c.keySetup(k)
+
+	c.absorbStop()
+	c.absorb(iv)
+
+	ptxt := make([]byte, len(m))
+
+	for i, x := range c.squeeze(len(ptxt)) {
+		ptxt[i] = m[i] - x
+	}
+
+	return ptxt
+}
+
+func Hash(m []byte, r byte) []byte {
+
+	var c cipher
+
+	c.initializeState()
+
+	c.absorb(m)
+	c.absorbStop()
+
+	// hash length
+	c.absorbByte(r)
+
+	return c.squeeze(int(r))
+}
+
 func (c *cipher) keySetup(k []byte) {
 	c.initializeState()
 	c.absorb(k)

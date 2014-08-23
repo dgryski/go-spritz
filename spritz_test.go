@@ -1,6 +1,9 @@
 package spritz
 
-import "testing"
+import (
+	"bytes"
+	"testing"
+)
 
 func TestOutput(t *testing.T) {
 
@@ -22,5 +25,46 @@ func TestOutput(t *testing.T) {
 				t.Errorf("key %q byte %d failed: got %x, want %x\n", tt.key, i, v, b)
 			}
 		}
+	}
+}
+
+func TestHash(t *testing.T) {
+
+	var tests = []struct {
+		key    string
+		output []byte
+	}{
+		// PDF only provides first 8 bytes for a 32-byte hash
+		{"ABC", []byte{0x02, 0x8f, 0xa2, 0xb4, 0x8b, 0x93, 0x4a, 0x18}},
+		{"spam", []byte{0xac, 0xbb, 0xa0, 0x81, 0x3f, 0x30, 0x0d, 0x3a}},
+		{"arcfour", []byte{0xff, 0x8c, 0xf2, 0x68, 0x09, 0x4c, 0x87, 0xb9}},
+	}
+
+	for _, tt := range tests {
+		if h := Hash([]byte(tt.key), 32); !bytes.Equal(h[:8], tt.output) {
+			t.Errorf("Hash(%q)=%x, want %x", tt.key, h[:8], tt.output)
+		}
+	}
+}
+
+func TestRoundtrip(t *testing.T) {
+
+	key := []byte{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07}
+	iv := []byte{0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f}
+
+	str := []byte("the magic words are squeamish ossifrage")
+
+	ctxt := Encrypt(key, str)
+	ptxt := Decrypt(key, ctxt)
+
+	if !bytes.Equal(ptxt, str) {
+		t.Errorf("Decrypt(key,Encrypt(key,str)) != str)")
+	}
+
+	ctxt = EncryptWithIV(key, iv, str)
+	ptxt = DecryptWithIV(key, iv, ctxt)
+
+	if !bytes.Equal(ptxt, str) {
+		t.Errorf("Decrypt(key,Encrypt(key,str)) != str)")
 	}
 }
